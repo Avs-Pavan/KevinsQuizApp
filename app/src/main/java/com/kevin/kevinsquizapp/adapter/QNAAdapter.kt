@@ -6,18 +6,19 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
+import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import coil.load
 import com.kevin.kevinsquizapp.QAModel
 import com.kevin.kevinsquizapp.R
 import com.kevin.kevinsquizapp.adapter.QNAAdapter.MyViewHolder
-import timber.log.Timber
 
 
-class QNAAdapter(val context: Context) : RecyclerView.Adapter<MyViewHolder>() {
-    private lateinit var questions: List<QAModel>
-    private lateinit var recyclerClickListener: RecyclerClickListener
-    fun setRecyclerClickListener(recyclerClickListener: RecyclerClickListener) {
+class QNAAdapter() : RecyclerView.Adapter<MyViewHolder>() {
+    private var questions: List<QAModel> = ArrayList()
+    private lateinit var recyclerClickListener: QnASelectionListener
+
+    fun setRecyclerClickListener(recyclerClickListener: QnASelectionListener) {
         this.recyclerClickListener = recyclerClickListener
     }
 
@@ -28,6 +29,7 @@ class QNAAdapter(val context: Context) : RecyclerView.Adapter<MyViewHolder>() {
 
     inner class MyViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val dp: ImageView = view.findViewById(R.id.image_card)
+        val questionNumber: TextView = view.findViewById(R.id.questionNumber)
         val options: RecyclerView = view.findViewById(R.id.options_rv)
     }
 
@@ -40,13 +42,18 @@ class QNAAdapter(val context: Context) : RecyclerView.Adapter<MyViewHolder>() {
         holder: MyViewHolder,
         @SuppressLint("RecyclerView") position: Int
     ) {
-        holder.dp.load(questions[position].image)
-        holder.options?.adapter = AnswersAdapter(questions[position].answers) {
-            Timber.e("Clicked option $it")
+        val question = questions[position]
+        holder.dp.load(question.image)
+        holder.questionNumber.text = "" + (position + 1)
+        holder.options?.adapter = AnswersAdapter(question.answers, question.correctAnswer) {
+            if (it == question.correctAnswer)
+                recyclerClickListener.onCorrectAnswerClicked(position)
+            else
+                recyclerClickListener.onWrongAnswerClicked(position)
         }
     }
 
     override fun getItemCount(): Int {
-        return 5
+        return questions.size
     }
 }
